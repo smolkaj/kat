@@ -2,10 +2,10 @@
 (* PARAMETERS                                                                *)
 (*===========================================================================*)
 
-(** Primitive tests . May want to functorize over this type. *)
+(** Primitive tests. May want to functorize over this type. *)
 type test = T1 | T2 | T3 | T4
 
-(** Actions. The set of actions is often denoted by Σ *)
+(** Actions. The set of actions is often denoted by Σ. *)
 type action = A1 | A2 | A3 | A4
 
 (** Atoms are truth assignments, mapping tests to true/false. *)
@@ -16,7 +16,7 @@ type atom = test -> bool
 (* AUTOMATA                                                                  *)
 (*===========================================================================*)
 
-(** deterministic KAT automaton - possibly with infinitely many states *)
+(** deterministic KAT automaton - possibly with infinitely many states. *)
 type 'state dfa = {
   start : 'state;
   obs : 'state -> atom -> bool;
@@ -54,6 +54,8 @@ module Exp = struct
 
   (*=========================================================================*)
   (* BRZOZOWKSI DERIVATIVES & DFA                                            *)
+  (* See, for example, Section 15.4.2 in the following paper:                *)
+  (*  http://www.cs.cornell.edu/~kozen/Papers/ChenPucella.pdf                *)
   (*=========================================================================*)
 
   let rec eval_bexp (b : b) (a : atom) : bool =
@@ -121,15 +123,16 @@ module ExpACI = struct
 
   open Hashcons
   (** Consult the following links for documentation:
+      * https://en.wikipedia.org/wiki/Hash_consing
       * https://www.lri.fr/~filliatr/ftp/publis/hash-consing2.pdf
       * https://github.com/backtracking/ocaml-hashcons/blob/master/hashcons.mli
   *)
 
   type t = node Hashcons.hash_consed
   and node =
-    | Test of test * bool            (** positive or negated test *)
+    | Test of test * bool             (** positive or negated test *)
     | Action of action
-    | Seq of t list                (** modulo associativity *)
+    | Seq of t list                   (** modulo associativity *)
     | Union of node Hashcons.Hset.t   (** modulo associativity, commutativity, idempotence *)
     | Star of t
 
