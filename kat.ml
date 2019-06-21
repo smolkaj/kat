@@ -3,10 +3,10 @@
 (*===========================================================================*)
 
 (** Primitive tests. May want to functorize over this type. *)
-type test = T1 | T2 | T3 | T4
+type test = T1 | T2 | T3 | T4 [@@deriving sexp]
 
 (** Actions. The set of actions is often denoted by Σ. *)
-type action = A1 | A2 | A3 | A4
+type action = A1 | A2 | A3 | A4 [@@deriving sexp]
 
 (** Atoms are truth assignments, mapping tests to true/false. *)
 type atom = test -> bool
@@ -249,5 +249,54 @@ module ExpACI = struct
       obs = epsilon;
       trans = delta;
     }
+
+
+  (*=========================================================================*)
+  (* pretty-printing                                                         *)
+  (*=========================================================================*)
+
+  let pp fmt (t : t) =
+    let rec pp_star fmt t =
+      match t.node with
+      | Test (t, positive) ->
+        Format.fprintf fmt !"@[<h>%s%{sexp:test}@]"
+          (if positive then "" else "¬")
+          t
+      | Action a ->
+        Format.fprintf fmt !"@[<h>%{sexp:action}@]" a
+      | Seq [] ->
+        Format.fprintf fmt "1"
+      | Seq _ ->
+        Format.fprintf fmt "@[(%a)@]" pp_seq t
+      | Union xs when Hashcons.Hset.is_empty xs->
+        Format.fprintf fmt "0"
+      | Union _ ->
+        Format.fprintf fmt "@[(%a)@]" pp_union t
+      | Star e ->
+        Format.fprintf fmt "@[%a*@]" pp_star e
+    and pp_seq fmt t =
+      match t.node with
+      | Seq (_::_ as xs) ->
+        Format.pp_print_list
+          ~pp_sep:(fun fmt () -> Format.pp_print_string fmt "·")
+          (fun fmt x -> Format.fprintf fmt "@[%a@]" pp_star x)
+          fmt
+          xs
+      | _ ->
+        Format.fprintf fmt "@[(%a)@]" pp_union t
+    and pp_union fmt t =
+      match t.node with
+      | Union xs when not (Hashcons.Hset.is_empty xs) ->
+        Format.pp_print_list
+          ~pp_sep:(fun fmt () -> Format.pp_print_text fmt " + ")
+          (fun fmt x -> Format.fprintf fmt "@[%a@]" pp_union x)
+          fmt
+          (Hashcons.Hset.elements xs)
+      | Seq (_::_) ->
+        pp_seq fmt t
+      | _ ->
+        pp_star fmt t
+    in
+    pp_union fmt t
 
 end
