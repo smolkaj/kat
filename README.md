@@ -7,7 +7,7 @@ You will need OCaml (tested with 4.07.1) and OPAM (v2 or higher), OCaml's packet
 
 We also use the library "hashcons" and OCamls build tool "dune"; you can install both using OPAM as follows:
 ```
-opam dune hashcons
+opam install dune hashcons
 ```
 
 
