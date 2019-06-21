@@ -3,7 +3,7 @@ Bare-bones implementation of Kleene Algebra with Tests (KAT) and Brzozowski deri
 
 
 ## Dependencies
-You will need OCaml (tested with 4.07.1) and OPAM (v2 or higher), OCaml's packet manager.
+You will need OCaml (tested with 4.07.1) and OPAM (version 2), OCaml's packet manager.
 
 We also use a few libraries and the OCaml build tool "dune"; you can install everything using OPAM as follows:
 ```
