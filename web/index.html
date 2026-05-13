@@ -4,291 +4,464 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KAT Explorer — Kleene Algebra with Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0b0e17;
-    --surface: #131829;
-    --border: #1e2744;
-    --accent: #e94560;
-    --accent-glow: rgba(233, 69, 96, 0.15);
-    --text: #e8eaf0;
-    --dim: #6b7394;
-    --ok: #4ade80;
-    --ok-dim: rgba(74, 222, 128, 0.12);
-    --code-bg: #0a0d14;
-    --node-fill: #1a1f35;
-    --node-stroke: #2d3555;
+    --paper: #f6f1eb;
+    --paper-warm: #efe8df;
+    --ink: #2c2416;
+    --ink-light: #5c5245;
+    --ink-faint: #9e9486;
+    --ink-ghost: #c9c1b6;
+    --accent: #8b2e1c;
+    --accent-light: #b44a35;
+    --accept: #2e6b3a;
+    --accept-light: #4a9e5c;
+    --blue: #2a4a6b;
+    --blue-light: #3d6d9e;
+    --grid: rgba(44, 36, 22, 0.06);
+    --grid-accent: rgba(44, 36, 22, 0.12);
+    --shadow: rgba(44, 36, 22, 0.08);
+    --mono: 'IBM Plex Mono', 'Menlo', monospace;
+    --serif: 'Source Serif 4', 'Georgia', serif;
+    --display: 'Playfair Display', 'Georgia', serif;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
-    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-    background: var(--bg);
-    color: var(--text);
+    font-family: var(--serif);
+    background: var(--paper);
+    color: var(--ink);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2.5rem 1.5rem;
+    padding: 3rem 1.5rem 2rem;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(139, 46, 28, 0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(42, 74, 107, 0.03) 0%, transparent 60%);
   }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 0.6s ease-out;
+  }
+
   h1 {
-    font-size: 1.5rem;
+    font-family: var(--display);
+    font-size: 2.4rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.1;
   }
+
+  h1 .ampersand {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
   .subtitle {
-    font-size: 0.8rem;
-    color: var(--dim);
-    margin-bottom: 2rem;
-    margin-top: 0.25rem;
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--ink-light);
+    margin-top: 0.4rem;
+    font-weight: 300;
   }
+
+  .rule {
+    width: 60px;
+    height: 1px;
+    background: var(--ink-ghost);
+    margin: 1.2rem auto 0;
+  }
+
   .input-area {
     width: 100%;
-    max-width: 740px;
+    max-width: 640px;
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+    animation: fadeIn 0.6s ease-out 0.1s both;
   }
+
   input[type="text"] {
     flex: 1;
-    font-family: inherit;
-    font-size: 1.05rem;
-    padding: 0.65rem 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+    background: #fff;
+    border: 1.5px solid var(--ink-ghost);
+    border-radius: 4px;
+    color: var(--ink);
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
+
+  input[type="text"]::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
   input[type="text"]:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    box-shadow: 0 0 0 3px rgba(139, 46, 28, 0.08);
   }
+
   button {
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 600;
-    padding: 0.65rem 1.4rem;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.15s;
-  }
-  button:hover { opacity: 0.9; }
-  button:active { transform: scale(0.97); }
-  .error {
-    color: var(--accent);
+    font-family: var(--mono);
     font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.7rem 1.6rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  button:hover { background: var(--accent); }
+  button:active { transform: scale(0.97); }
+
+  .error {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 0.8rem;
     margin-bottom: 0.75rem;
-    max-width: 740px;
+    max-width: 640px;
     width: 100%;
   }
+
+  .examples-bar {
+    width: 100%;
+    max-width: 640px;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-bottom: 2rem;
+    animation: fadeIn 0.6s ease-out 0.15s both;
+  }
+
+  .examples-bar span { margin-right: 0.3rem; }
+
+  .examples-bar a {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--blue);
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 3px;
+    margin-right: 0.4rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .examples-bar a:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
   .result {
     width: 100%;
-    max-width: 740px;
+    max-width: 780px;
+    animation: slideUp 0.4s ease-out;
   }
+
   .normalized {
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.7rem 1rem;
-    margin-bottom: 1.25rem;
-    font-size: 1rem;
-    overflow-x: auto;
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.5rem;
+    background: #fff;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    box-shadow: 0 1px 4px var(--shadow);
   }
+
   .normalized .label {
-    font-size: 0.7rem;
-    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--ink-faint);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.35rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+  }
+
+  .normalized .expr {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    color: var(--ink);
+    word-break: break-all;
   }
 
   #graph-container {
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1.25rem;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      linear-gradient(var(--grid-accent) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-accent) 1px, transparent 1px),
+      #fff;
+    background-size:
+      10px 10px,
+      10px 10px,
+      50px 50px,
+      50px 50px;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
     overflow-x: auto;
     display: flex;
     justify-content: center;
+    box-shadow: 0 1px 4px var(--shadow);
+    position: relative;
   }
+
+  #graph-container::before {
+    content: 'AUTOMATON';
+    position: absolute;
+    top: 0.5rem;
+    left: 0.7rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--ink-ghost);
+    text-transform: uppercase;
+  }
+
   #graph-container svg {
     max-width: 100%;
     height: auto;
   }
-  /* Restyle Graphviz SVG to match the dark theme */
+
   #graph-container svg polygon[fill="white"],
   #graph-container svg polygon[fill="#ffffff"] { fill: transparent !important; stroke: none !important; }
+
   #graph-container svg .node polygon,
   #graph-container svg .node ellipse {
-    fill: var(--node-fill) !important;
-    stroke: var(--node-stroke) !important;
+    fill: #fff !important;
+    stroke: var(--ink-light) !important;
     stroke-width: 1.5 !important;
   }
+
   #graph-container svg .node.accepting ellipse {
-    stroke: var(--ok) !important;
+    stroke: var(--accept) !important;
     stroke-width: 2 !important;
   }
+
   #graph-container svg .node.start ellipse {
     stroke: var(--accent) !important;
-    stroke-width: 2 !important;
+    stroke-width: 2.5 !important;
   }
+
   #graph-container svg .node text {
-    fill: var(--text) !important;
-    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', monospace !important;
-    font-size: 11px !important;
-  }
-  #graph-container svg .edge path { stroke: var(--dim) !important; }
-  #graph-container svg .edge polygon {
-    fill: var(--dim) !important;
-    stroke: var(--dim) !important;
-  }
-  #graph-container svg .edge text {
-    fill: var(--dim) !important;
-    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', monospace !important;
+    fill: var(--ink) !important;
+    font-family: 'IBM Plex Mono', monospace !important;
     font-size: 10px !important;
   }
 
-  details {
-    width: 100%;
-    margin-bottom: 0.5rem;
+  #graph-container svg .edge path {
+    stroke: var(--ink-faint) !important;
+    stroke-width: 1 !important;
   }
-  summary {
-    font-size: 0.82rem;
+
+  #graph-container svg .edge polygon {
+    fill: var(--ink-faint) !important;
+    stroke: var(--ink-faint) !important;
+  }
+
+  #graph-container svg .edge text {
+    fill: var(--ink-light) !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 9px !important;
+  }
+
+  .tables-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 640px) {
+    .tables-section { grid-template-columns: 1fr; }
+  }
+
+  .table-card {
+    background: #fff;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+
+  .table-card h3 {
+    font-family: var(--mono);
+    font-size: 0.65rem;
     font-weight: 600;
-    color: var(--dim);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    padding: 0.5rem 0;
-    user-select: none;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--ink-ghost);
   }
-  summary:hover { color: var(--text); }
+
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.82rem;
-    margin: 0.4rem 0 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
   }
+
   th {
     text-align: left;
-    padding: 0.4rem 0.6rem;
-    border-bottom: 2px solid var(--border);
-    color: var(--dim);
+    padding: 0.35rem 0.5rem;
+    color: var(--ink-faint);
     font-weight: 500;
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    border-bottom: 1.5px solid var(--ink-ghost);
   }
+
   td {
-    padding: 0.4rem 0.6rem;
-    border-bottom: 1px solid var(--border);
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
     vertical-align: top;
+    line-height: 1.4;
   }
+
+  tr:last-child td { border-bottom: none; }
+
   .state-label { color: var(--accent); }
-  .start-marker { color: var(--ok); font-weight: bold; }
-  .accepting { color: var(--ok); font-size: 0.78rem; }
-  .edge-label { color: var(--dim); }
+  .start-marker { color: var(--accent-light); font-weight: 600; }
+  .accepting { color: var(--accept); font-size: 0.72rem; }
+  .edge-label { color: var(--ink-faint); }
+
   .help {
-    max-width: 740px;
+    max-width: 640px;
     width: 100%;
-    margin-top: 2rem;
-    padding: 1rem 1.2rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    margin-top: 1rem;
+    text-align: center;
     font-size: 0.78rem;
-    color: var(--dim);
-    line-height: 1.7;
+    color: var(--ink-faint);
+    line-height: 1.8;
+    animation: fadeIn 0.6s ease-out 0.2s both;
   }
+
   .help code {
-    background: var(--code-bg);
-    padding: 0.15em 0.4em;
-    border-radius: 4px;
-    color: var(--text);
-    font-size: 0.9em;
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: rgba(0,0,0,0.04);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    color: var(--ink-light);
   }
-  .examples { margin-top: 0.6rem; }
-  .examples a {
-    color: var(--accent);
-    cursor: pointer;
-    text-decoration: none;
-    margin-right: 1.2rem;
-    white-space: nowrap;
-    transition: opacity 0.15s;
-  }
-  .examples a:hover { opacity: 0.75; }
+
   .footer {
-    margin-top: 2.5rem;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ink-ghost);
     font-size: 0.72rem;
-    color: var(--dim);
+    color: var(--ink-faint);
+    text-align: center;
+    width: 100%;
+    max-width: 640px;
+    animation: fadeIn 0.6s ease-out 0.3s both;
   }
-  .footer a { color: var(--accent); text-decoration: none; }
+
+  .footer a {
+    color: var(--blue);
+    text-decoration: none;
+  }
+
   .footer a:hover { text-decoration: underline; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 </head>
 <body>
-  <h1>KAT Explorer</h1>
-  <p class="subtitle">Kleene Algebra with Tests &mdash; Brzozowski derivatives &amp; DFA construction</p>
+
+  <header>
+    <h1>Kleene Algebra<br>with Tests</h1>
+    <p class="subtitle">Brzozowski derivatives &amp; DFA construction</p>
+    <div class="rule"></div>
+  </header>
 
   <div class="input-area">
-    <input type="text" id="expr" placeholder="e.g. (T1;(A1+A2);A3 + !T2;A2)*" autofocus>
+    <input type="text" id="expr" placeholder="enter a KAT expression ..." autofocus>
     <button id="go">Explore</button>
   </div>
   <div class="error" id="error"></div>
 
+  <div class="examples-bar">
+    <span>Try:</span>
+    <a data-expr="(T1;(A1+A2);A3 + !T2;A2)*">while loop</a>
+    <a data-expr="T1;A1;A2 + !T1;A2">if-then-else</a>
+    <a data-expr="A1;A2*;A3">sequence</a>
+    <a data-expr="(!T1;A1)*;T1">repeat until</a>
+  </div>
+
   <div class="result" id="result" style="display:none">
     <div class="normalized">
-      <div class="label">Normalized (mod ACI)</div>
-      <div id="normalized-expr"></div>
+      <div class="label">Normalized mod ACI</div>
+      <div class="expr" id="normalized-expr"></div>
     </div>
 
     <div id="graph-container"></div>
 
-    <details>
-      <summary>States</summary>
-      <table id="states-table">
-        <thead><tr><th>#</th><th>Expression</th><th>Accepting when</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </details>
-
-    <details>
-      <summary>Transitions</summary>
-      <table id="trans-table">
-        <thead><tr><th>From</th><th>Atom, Action</th><th>To</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </details>
-  </div>
-
-  <div class="help">
-    <strong>Syntax</strong><br>
-    Tests: <code>T1</code> <code>T2</code> <code>T3</code> <code>T4</code> &nbsp;
-    Actions: <code>A1</code> <code>A2</code> <code>A3</code> <code>A4</code><br>
-    Operators: <code>+</code> union, <code>;</code> or juxtaposition for seq,
-    <code>*</code> Kleene star, <code>!</code> negation (booleans only),
-    <code>0</code> abort, <code>1</code> skip<br>
-    <div class="examples">
-      <strong>Try:</strong>
-      <a data-expr="(T1;(A1+A2);A3 + !T2;A2)*">while loop</a>
-      <a data-expr="T1;A1;A2 + !T1;A2">if-then-else</a>
-      <a data-expr="A1;A2*;A3">sequence</a>
-      <a data-expr="(!T1;A1)*;T1">repeat until</a>
+    <div class="tables-section">
+      <div class="table-card">
+        <h3>States</h3>
+        <table id="states-table">
+          <thead><tr><th>#</th><th>Expression</th><th>Accepting</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <h3>Transitions</h3>
+        <table id="trans-table">
+          <thead><tr><th>From</th><th>Label</th><th>To</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
+  <div class="help">
+    Tests: <code>T1</code> <code>T2</code> <code>T3</code> <code>T4</code> &nbsp;&middot;&nbsp;
+    Actions: <code>A1</code> <code>A2</code> <code>A3</code> <code>A4</code><br>
+    <code>+</code> union &nbsp;&middot;&nbsp;
+    <code>;</code> seq &nbsp;&middot;&nbsp;
+    <code>*</code> star &nbsp;&middot;&nbsp;
+    <code>!</code> negation &nbsp;&middot;&nbsp;
+    <code>0</code> abort &nbsp;&middot;&nbsp;
+    <code>1</code> skip
+  </div>
+
   <div class="footer">
-    <a href="https://github.com/smolkaj/kat">Source on GitHub</a>
-    &mdash; based on Brzozowski derivatives for KAT
+    <a href="https://github.com/smolkaj/kat">Source</a> &middot;
+    Based on Brzozowski derivatives for KAT
     (<a href="http://www.cs.cornell.edu/~kozen/Papers/ChenPucella.pdf">Chen &amp; Pucella</a>)
   </div>
 
@@ -315,24 +488,23 @@
         'digraph {',
         '  rankdir=LR;',
         '  bgcolor="transparent";',
-        '  node [shape=ellipse, fontname="monospace", fontsize=11, margin="0.15,0.07"];',
-        '  edge [fontname="monospace", fontsize=10];',
+        '  node [shape=ellipse, fontname="IBM Plex Mono", fontsize=10, style=filled, fillcolor="#ffffff", color="#5c5245", margin="0.12,0.06"];',
+        '  edge [fontname="IBM Plex Mono", fontsize=9, color="#9e9486", fontcolor="#5c5245"];',
         '  __start [shape=none, label="", width=0, height=0];',
       ];
 
-      const acceptingIds = new Set();
       const startId = states.length ? states[0].id : 0;
 
       states.forEach(s => {
         const acc = s.accepting.length > 0;
-        if (acc) acceptingIds.add(s.id);
         const shape = acc ? 'doublecircle' : 'ellipse';
-        lines.push(`  ${s.id} [label="${dotEscape(s.label)}", shape=${shape}];`);
+        const color = s.start ? '#8b2e1c' : acc ? '#2e6b3a' : '#5c5245';
+        const penwidth = s.start ? '2.5' : acc ? '2' : '1.5';
+        lines.push(`  ${s.id} [label="${dotEscape(s.label)}", shape=${shape}, color="${color}", penwidth=${penwidth}];`);
       });
 
-      lines.push(`  __start -> ${startId};`);
+      lines.push(`  __start -> ${startId} [color="#8b2e1c", penwidth=1.5];`);
 
-      // Merge parallel edges between the same pair of states
       const edgeMap = new Map();
       transitions.forEach(t => {
         const key = `${t.from}->${t.to}`;
@@ -370,13 +542,11 @@
       const acceptingIds = new Set(states.filter(s => s.accepting.length).map(s => s.id));
       const startId = states.length ? states[0].id : -1;
 
-      // Render graph
       const viz = await vizReady;
       const dot = toDot(states, transitions);
       graphDiv.innerHTML = '';
       try {
         const svg = viz.renderSVGElement(dot);
-        // Tag nodes for CSS styling
         svg.querySelectorAll('.node').forEach(g => {
           const title = g.querySelector('title');
           if (!title) return;
@@ -389,30 +559,27 @@
         graphDiv.textContent = 'Graph rendering failed';
       }
 
-      // Build state label map
       const labelOf = {};
       states.forEach(s => { labelOf[s.id] = s.label; });
 
-      // States table
       statesBody.innerHTML = '';
       states.forEach(s => {
         const tr = document.createElement('tr');
-        const marker = s.start ? ' →' : '';
+        const marker = s.start ? '→ ' : '';
         tr.innerHTML =
-          `<td><span class="start-marker">${marker}</span> ${s.id}</td>` +
+          `<td><span class="start-marker">${marker}</span>${s.id}</td>` +
           `<td class="state-label">${esc(s.label)}</td>` +
           `<td class="accepting">${s.accepting.length ? s.accepting.map(esc).join(', ') : '—'}</td>`;
         statesBody.appendChild(tr);
       });
 
-      // Transitions table
       transBody.innerHTML = '';
       transitions.forEach(t => {
         const tr = document.createElement('tr');
         tr.innerHTML =
-          `<td>${t.from} <span class="edge-label">${esc(labelOf[t.from] || '?')}</span></td>` +
+          `<td>${t.from}</td>` +
           `<td class="edge-label">${esc(t.label)}</td>` +
-          `<td>${t.to} <span class="edge-label">${esc(labelOf[t.to] || '?')}</span></td>`;
+          `<td>${t.to}</td>`;
         transBody.appendChild(tr);
       });
 
