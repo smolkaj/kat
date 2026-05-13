@@ -8,37 +8,8 @@ type test = T1 | T2 | T3 | T4 [@@deriving sexp]
 (** Actions. The set of actions is often denoted by Σ. *)
 type action = A1 | A2 | A3 | A4 [@@deriving sexp]
 
-let all_tests = [T1; T2; T3; T4]
-let all_actions = [A1; A2; A3; A4]
-
-let string_of_test = function T1 -> "T1" | T2 -> "T2" | T3 -> "T3" | T4 -> "T4"
-let string_of_action = function A1 -> "A1" | A2 -> "A2" | A3 -> "A3" | A4 -> "A4"
-
-let test_of_string = function
-  | "T1" -> Some T1 | "T2" -> Some T2 | "T3" -> Some T3 | "T4" -> Some T4
-  | _ -> None
-let action_of_string = function
-  | "A1" -> Some A1 | "A2" -> Some A2 | "A3" -> Some A3 | "A4" -> Some A4
-  | _ -> None
-
 (** Atoms are truth assignments, mapping tests to true/false. *)
 type atom = test -> bool
-
-let enumerate_atoms () : atom list =
-  let n = List.length all_tests in
-  let count = 1 lsl n in
-  List.init count (fun i ->
-    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_tests in
-    fun t -> List.assoc t assignment)
-
-let pp_atom (a : atom) : string =
-  all_tests
-  |> List.filter_map (fun t ->
-    if a t then Some (string_of_test t)
-    else None)
-  |> function
-    | [] -> "∅"
-    | ts -> String.concat "" ts
 
 
 (*===========================================================================*)
@@ -286,11 +257,11 @@ module ExpACI = struct
     let rec pp_star fmt t =
       match t.node with
       | Test (t, positive) ->
-        Format.fprintf fmt "@[<h>%s%s@]"
+        Format.fprintf fmt !"@[<h>%s%{sexp:test}@]"
           (if positive then "" else "¬")
-          (string_of_test t)
+          t
       | Action a ->
-        Format.fprintf fmt "@[<h>%s@]" (string_of_action a)
+        Format.fprintf fmt !"@[<h>%{sexp:action}@]" a
       | Seq [] ->
         Format.fprintf fmt "1"
       | Seq _ ->
