@@ -2,12 +2,6 @@ open Js_of_ocaml
 open Kat
 open Sexplib0.Sexp
 
-let js_string s = Js.Unsafe.inject (Js.string s)
-let js_int n = Js.Unsafe.inject n
-let js_bool b = Js.Unsafe.inject (Js.bool b)
-let js_array xs = Js.Unsafe.inject (Js.array (Array.of_list xs))
-let js_obj fields = Js.Unsafe.obj (Array.of_list fields)
-
 (*   e ::= e '+' e  |  e e  |  e '*'  |  '!' e  |  '(' e ')'
  *       | 'T1' .. 'T4'  |  'A1' .. 'A4'  |  '0'  |  '1'         *)
 
@@ -134,6 +128,7 @@ let parse (tokens : token list) : Exp.t =
   if peek () <> TEOF then failwith "parse error: unexpected token after expression";
   e
 
+
 let enumerate_atoms () : atom list =
   let n = List.length all_of_test in
   List.init (1 lsl n) (fun i ->
@@ -153,6 +148,19 @@ module StateMap = Map.Make(struct
   type t = ExpACI.t
   let compare = ExpACI.compare
 end)
+
+type dfa_state = {
+  id : int;
+  label : string;
+  start : bool;
+  accepting : string list;
+}
+
+type dfa_transition = {
+  src : int;
+  dst : int;
+  label : string;
+}
 
 let explore_dfa (e : Exp.t) =
   let dfa = ExpACI.brzozowski_dfa e in
@@ -176,34 +184,52 @@ let explore_dfa (e : Exp.t) =
     let s = Queue.pop queue in
     let (id, is_new) = get_id s in
     if is_new then begin
-      let label = Format.asprintf "%a" ExpACI.pp s in
-      let accepting =
-        atoms
-        |> List.filter (fun a -> dfa.obs s a)
-        |> List.map (fun a -> js_string (pp_atom a))
-      in
-      states := js_obj [
-        ("id", js_int id);
-        ("label", js_string label);
-        ("start", js_bool (id = 0));
-        ("accepting", js_array accepting);
-      ] :: !states;
+      states := {
+        id;
+        label = Format.asprintf "%a" ExpACI.pp s;
+        start = (id = 0);
+        accepting = atoms
+          |> List.filter (fun a -> dfa.obs s a)
+          |> List.map pp_atom;
+      } :: !states;
       List.iter (fun a ->
         List.iter (fun p ->
           let s' = dfa.trans s a p in
           if not (ExpACI.is_abort s') then begin
             let (id', is_new') = get_id s' in
-            transitions := js_obj [
-              ("from", js_int id);
-              ("to", js_int id');
-              ("label", js_string (Printf.sprintf "%s,%s"
-                (pp_atom a) (to_string (sexp_of_action p))));
-            ] :: !transitions;
+            transitions := {
+              src = id;
+              dst = id';
+              label = Printf.sprintf "%s,%s"
+                (pp_atom a) (to_string (sexp_of_action p));
+            } :: !transitions;
             if is_new' then Queue.push s' queue
           end) all_of_action) atoms
     end
   done;
-  (dfa.start, js_array (List.rev !states), js_array (List.rev !transitions))
+  (dfa.start, List.rev !states, List.rev !transitions)
+
+
+let js_string s = Js.Unsafe.inject (Js.string s)
+let js_int n = Js.Unsafe.inject n
+let js_bool b = Js.Unsafe.inject (Js.bool b)
+let js_array xs = Js.Unsafe.inject (Js.array (Array.of_list xs))
+let js_obj fields = Js.Unsafe.obj (Array.of_list fields)
+
+let state_to_js { id; label; start; accepting } =
+  js_obj [
+    ("id", js_int id);
+    ("label", js_string label);
+    ("start", js_bool start);
+    ("accepting", js_array (List.map js_string accepting));
+  ]
+
+let transition_to_js { src; dst; label } =
+  js_obj [
+    ("from", js_int src);
+    ("to", js_int dst);
+    ("label", js_string label);
+  ]
 
 let () =
   let process input_str =
@@ -213,8 +239,8 @@ let () =
       js_obj [
         ("ok", js_bool true);
         ("expression", js_string (Format.asprintf "%a" ExpACI.pp start));
-        ("states", states);
-        ("transitions", transitions);
+        ("states", js_array (List.map state_to_js states));
+        ("transitions", js_array (List.map transition_to_js transitions));
       ]
     with Failure msg ->
       js_obj [
