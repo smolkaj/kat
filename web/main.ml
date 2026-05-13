@@ -2,33 +2,14 @@ open Js_of_ocaml
 open Kat
 open Sexplib0.Sexp
 
-let test_of_string s =
-  try Some (test_of_sexp (Atom s)) with _ -> None
-let action_of_string s =
-  try Some (action_of_sexp (Atom s)) with _ -> None
+let js_string s = Js.Unsafe.inject (Js.string s)
+let js_int n = Js.Unsafe.inject n
+let js_bool b = Js.Unsafe.inject (Js.bool b)
+let js_array xs = Js.Unsafe.inject (Js.array (Array.of_list xs))
+let js_obj fields = Js.Unsafe.obj (Array.of_list fields)
 
-let enumerate_atoms () : atom list =
-  let n = List.length all_of_test in
-  let count = 1 lsl n in
-  List.init count (fun i ->
-    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_of_test in
-    fun t -> List.assoc t assignment)
-
-let pp_atom (a : atom) : string =
-  all_of_test
-  |> List.filter_map (fun t ->
-    if a t then Some (to_string (sexp_of_test t))
-    else None)
-  |> function
-    | [] -> "∅"
-    | ts -> String.concat "" ts
-
-(* ========================================================================= *)
-(* PARSER                                                                    *)
-(* Simple recursive descent parser for KAT expressions.                      *)
-(*   e ::= e '+' e  |  e e  |  e '*'  |  '!' e  |  '(' e ')'               *)
-(*       | 'T1' .. 'T4'  |  'A1' .. 'A4'  |  '0'  |  '1'                   *)
-(* ========================================================================= *)
+(*   e ::= e '+' e  |  e e  |  e '*'  |  '!' e  |  '(' e ')'
+ *       | 'T1' .. 'T4'  |  'A1' .. 'A4'  |  '0'  |  '1'         *)
 
 type token =
   | TTest of test
@@ -38,6 +19,12 @@ type token =
   | TLParen | TRParen
   | TSemicolon
   | TEOF
+
+let token_of_name =
+  let tbl = Hashtbl.create 8 in
+  List.iter (fun t -> Hashtbl.add tbl (to_string (sexp_of_test t)) (TTest t)) all_of_test;
+  List.iter (fun a -> Hashtbl.add tbl (to_string (sexp_of_action a)) (TAction a)) all_of_action;
+  Hashtbl.find_opt tbl
 
 let tokenize (s : string) : token list =
   let i = ref 0 in
@@ -54,14 +41,11 @@ let tokenize (s : string) : token list =
     | ';' -> tokens := TSemicolon :: !tokens; incr i
     | '0' -> tokens := TZero :: !tokens; incr i
     | '1' -> tokens := TOne :: !tokens; incr i
-    | 'T' | 'A' when !i + 1 < n ->
+    | _ when !i + 1 < n ->
       let name = String.sub s !i 2 in
-      (match test_of_string name with
-       | Some t -> tokens := TTest t :: !tokens; i := !i + 2
-       | None ->
-         match action_of_string name with
-         | Some a -> tokens := TAction a :: !tokens; i := !i + 2
-         | None -> failwith (Printf.sprintf "unexpected: %s" name))
+      (match token_of_name name with
+       | Some tok -> tokens := tok :: !tokens; i := !i + 2
+       | None -> failwith (Printf.sprintf "unexpected: %s" name))
     | c -> failwith (Printf.sprintf "unexpected character: %c" c)
   done;
   List.rev !tokens
@@ -150,93 +134,95 @@ let parse (tokens : token list) : Exp.t =
   if peek () <> TEOF then failwith "parse error: unexpected token after expression";
   e
 
-let parse_string (s : string) : Exp.t =
-  parse (tokenize s)
+let enumerate_atoms () : atom list =
+  let n = List.length all_of_test in
+  List.init (1 lsl n) (fun i ->
+    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_of_test in
+    fun t -> List.assoc t assignment)
 
+let pp_atom (a : atom) : string =
+  all_of_test
+  |> List.filter_map (fun t ->
+    if a t then Some (to_string (sexp_of_test t))
+    else None)
+  |> function
+    | [] -> "∅"
+    | ts -> String.concat "" ts
 
 module StateMap = Map.Make(struct
   type t = ExpACI.t
   let compare = ExpACI.compare
 end)
 
-let js_string s = Js.Unsafe.inject (Js.string s)
-let js_int n = Js.Unsafe.inject n
-let js_bool b = Js.Unsafe.inject (Js.bool b)
-
-let js_array_of_list xs =
-  Js.Unsafe.inject (Js.array (Array.of_list xs))
-
 let explore_dfa (e : Exp.t) =
   let dfa = ExpACI.brzozowski_dfa e in
   let atoms = enumerate_atoms () in
   let queue = Queue.create () in
-  let state_id = ref StateMap.empty in
+  let ids = ref StateMap.empty in
   let next_id = ref 0 in
   let get_id s =
-    match StateMap.find_opt s !state_id with
+    match StateMap.find_opt s !ids with
     | Some id -> (id, false)
     | None ->
       let id = !next_id in
       incr next_id;
-      state_id := StateMap.add s id !state_id;
+      ids := StateMap.add s id !ids;
       (id, true)
   in
   let states = ref [] in
   let transitions = ref [] in
   Queue.push dfa.start queue;
-  ignore (get_id dfa.start);
   while not (Queue.is_empty queue) do
     let s = Queue.pop queue in
     let (id, is_new) = get_id s in
-    if is_new || id = 0 && List.length !states = 0 then begin
+    if is_new then begin
       let label = Format.asprintf "%a" ExpACI.pp s in
       let accepting =
         atoms
         |> List.filter (fun a -> dfa.obs s a)
         |> List.map (fun a -> js_string (pp_atom a))
       in
-      states := Js.Unsafe.obj [|
+      states := js_obj [
         ("id", js_int id);
         ("label", js_string label);
         ("start", js_bool (id = 0));
-        ("accepting", js_array_of_list accepting);
-      |] :: !states;
+        ("accepting", js_array accepting);
+      ] :: !states;
       List.iter (fun a ->
         List.iter (fun p ->
           let s' = dfa.trans s a p in
           if not (ExpACI.is_abort s') then begin
             let (id', is_new') = get_id s' in
-            let edge_label = Printf.sprintf "%s,%s" (pp_atom a) (to_string (sexp_of_action p)) in
-            transitions := Js.Unsafe.obj [|
+            transitions := js_obj [
               ("from", js_int id);
               ("to", js_int id');
-              ("label", js_string edge_label);
-            |] :: !transitions;
+              ("label", js_string (Printf.sprintf "%s,%s"
+                (pp_atom a) (to_string (sexp_of_action p))));
+            ] :: !transitions;
             if is_new' then Queue.push s' queue
           end) all_of_action) atoms
     end
   done;
-  (dfa.start, js_array_of_list (List.rev !states), js_array_of_list (List.rev !transitions))
+  (dfa.start, js_array (List.rev !states), js_array (List.rev !transitions))
 
 let () =
   let process input_str =
     try
-      let e = parse_string input_str in
+      let e = parse (tokenize input_str) in
       let (start, states, transitions) = explore_dfa e in
-      let pretty = Format.asprintf "%a" ExpACI.pp start in
-      Js.Unsafe.obj [|
-        ("ok", Js.Unsafe.inject Js._true);
-        ("expression", Js.Unsafe.inject (Js.string pretty));
+      js_obj [
+        ("ok", js_bool true);
+        ("expression", js_string (Format.asprintf "%a" ExpACI.pp start));
         ("states", states);
         ("transitions", transitions);
-      |]
+      ]
     with Failure msg ->
-      Js.Unsafe.obj [|
-        ("ok", Js.Unsafe.inject Js._false);
-        ("error", Js.Unsafe.inject (Js.string msg));
-      |]
+      js_obj [
+        ("ok", js_bool false);
+        ("error", js_string msg);
+      ]
   in
-  Js.export "KAT" (Js.Unsafe.obj [|
+  Js.export "KAT" (js_obj [
     ("process", Js.Unsafe.inject (Js.wrap_callback (fun s ->
       process (Js.to_string s))));
-  |])
+  ])

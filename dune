@@ -1,5 +1,6 @@
 (library
  (name kat)
+ (public_name kat)
  (wrapped false)
  (libraries hashcons)
  (preprocess (pps ppx_sexp_conv ppx_custom_printf ppx_enumerate)))
