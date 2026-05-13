@@ -513,10 +513,11 @@
       });
       edgeMap.forEach((labels, key) => {
         const [from, to] = key.split('->');
-        const label = labels.length <= 4
-          ? labels.join('\\n')
-          : labels.slice(0, 3).join('\\n') + `\\n(+${labels.length - 3} more)`;
-        lines.push(`  ${from} -> ${to} [label="${dotEscape(label)}"];`);
+        const escaped = labels.map(dotEscape);
+        const label = escaped.length <= 4
+          ? escaped.join('\\n')
+          : escaped.slice(0, 3).join('\\n') + `\\n(+${escaped.length - 3} more)`;
+        lines.push(`  ${from} -> ${to} [label="${label}"];`);
       });
 
       lines.push('}');
