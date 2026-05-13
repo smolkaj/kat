@@ -6,108 +6,177 @@
 <title>KAT Explorer — Kleene Algebra with Tests</title>
 <style>
   :root {
-    --bg: #1a1a2e;
-    --surface: #16213e;
-    --border: #0f3460;
+    --bg: #0b0e17;
+    --surface: #131829;
+    --border: #1e2744;
     --accent: #e94560;
-    --text: #eee;
-    --dim: #888;
-    --ok: #53d769;
-    --code-bg: #0d1b2a;
+    --accent-glow: rgba(233, 69, 96, 0.15);
+    --text: #e8eaf0;
+    --dim: #6b7394;
+    --ok: #4ade80;
+    --ok-dim: rgba(74, 222, 128, 0.12);
+    --code-bg: #0a0d14;
+    --node-fill: #1a1f35;
+    --node-stroke: #2d3555;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1.5rem;
   }
   h1 {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin-bottom: 0.3rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .subtitle {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--dim);
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    margin-top: 0.25rem;
   }
   .input-area {
     width: 100%;
-    max-width: 720px;
+    max-width: 740px;
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
   input[type="text"] {
     flex: 1;
     font-family: inherit;
-    font-size: 1.1rem;
-    padding: 0.6rem 0.8rem;
+    font-size: 1.05rem;
+    padding: 0.65rem 1rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text);
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
   button {
     font-family: inherit;
-    font-size: 0.95rem;
-    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.65rem 1.4rem;
     background: var(--accent);
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: transform 0.1s, opacity 0.15s;
   }
-  button:hover { opacity: 0.85; }
+  button:hover { opacity: 0.9; }
+  button:active { transform: scale(0.97); }
   .error {
     color: var(--accent);
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-    max-width: 720px;
+    font-size: 0.82rem;
+    margin-bottom: 0.75rem;
+    max-width: 740px;
     width: 100%;
   }
   .result {
     width: 100%;
-    max-width: 720px;
+    max-width: 740px;
   }
   .normalized {
     background: var(--code-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.6rem 0.8rem;
-    margin-bottom: 1rem;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1.25rem;
     font-size: 1rem;
     overflow-x: auto;
   }
   .normalized .label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--dim);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.3rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
   }
-  .section-title {
-    font-size: 0.85rem;
+
+  #graph-container {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+  }
+  #graph-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+  /* Restyle Graphviz SVG to match the dark theme */
+  #graph-container svg polygon[fill="white"],
+  #graph-container svg polygon[fill="#ffffff"] { fill: transparent !important; stroke: none !important; }
+  #graph-container svg .node polygon,
+  #graph-container svg .node ellipse {
+    fill: var(--node-fill) !important;
+    stroke: var(--node-stroke) !important;
+    stroke-width: 1.5 !important;
+  }
+  #graph-container svg .node.accepting ellipse {
+    stroke: var(--ok) !important;
+    stroke-width: 2 !important;
+  }
+  #graph-container svg .node.start ellipse {
+    stroke: var(--accent) !important;
+    stroke-width: 2 !important;
+  }
+  #graph-container svg .node text {
+    fill: var(--text) !important;
+    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', monospace !important;
+    font-size: 11px !important;
+  }
+  #graph-container svg .edge path { stroke: var(--dim) !important; }
+  #graph-container svg .edge polygon {
+    fill: var(--dim) !important;
+    stroke: var(--dim) !important;
+  }
+  #graph-container svg .edge text {
+    fill: var(--dim) !important;
+    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', monospace !important;
+    font-size: 10px !important;
+  }
+
+  details {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  summary {
+    font-size: 0.82rem;
     font-weight: 600;
-    margin: 1rem 0 0.5rem;
     color: var(--dim);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    user-select: none;
   }
+  summary:hover { color: var(--text); }
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+    margin: 0.4rem 0 0.5rem;
   }
   th {
     text-align: left;
@@ -115,9 +184,9 @@
     border-bottom: 2px solid var(--border);
     color: var(--dim);
     font-weight: 500;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
   td {
     padding: 0.4rem 0.6rem;
@@ -126,38 +195,40 @@
   }
   .state-label { color: var(--accent); }
   .start-marker { color: var(--ok); font-weight: bold; }
-  .accepting { color: var(--ok); font-size: 0.8rem; }
+  .accepting { color: var(--ok); font-size: 0.78rem; }
   .edge-label { color: var(--dim); }
   .help {
-    max-width: 720px;
+    max-width: 740px;
     width: 100%;
     margin-top: 2rem;
-    padding: 1rem;
+    padding: 1rem 1.2rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 0.8rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
     color: var(--dim);
-    line-height: 1.6;
+    line-height: 1.7;
   }
   .help code {
     background: var(--code-bg);
-    padding: 0.1em 0.35em;
-    border-radius: 3px;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
     color: var(--text);
+    font-size: 0.9em;
   }
-  .examples { margin-top: 0.5rem; }
+  .examples { margin-top: 0.6rem; }
   .examples a {
     color: var(--accent);
     cursor: pointer;
     text-decoration: none;
-    margin-right: 1rem;
+    margin-right: 1.2rem;
     white-space: nowrap;
+    transition: opacity 0.15s;
   }
-  .examples a:hover { text-decoration: underline; }
+  .examples a:hover { opacity: 0.75; }
   .footer {
-    margin-top: 2rem;
-    font-size: 0.75rem;
+    margin-top: 2.5rem;
+    font-size: 0.72rem;
     color: var(--dim);
   }
   .footer a { color: var(--accent); text-decoration: none; }
@@ -180,17 +251,23 @@
       <div id="normalized-expr"></div>
     </div>
 
-    <div class="section-title">States</div>
-    <table id="states-table">
-      <thead><tr><th>#</th><th>Expression</th><th>Accepting when</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div id="graph-container"></div>
 
-    <div class="section-title">Transitions</div>
-    <table id="trans-table">
-      <thead><tr><th>From</th><th>Atom, Action</th><th>To</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <details>
+      <summary>States</summary>
+      <table id="states-table">
+        <thead><tr><th>#</th><th>Expression</th><th>Accepting when</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary>Transitions</summary>
+      <table id="trans-table">
+        <thead><tr><th>From</th><th>Atom, Action</th><th>To</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </details>
   </div>
 
   <div class="help">
@@ -215,6 +292,7 @@
     (<a href="http://www.cs.cornell.edu/~kozen/Papers/ChenPucella.pdf">Chen &amp; Pucella</a>)
   </div>
 
+  <script src="https://unpkg.com/@viz-js/viz@3.11.0/lib/viz-standalone.js"></script>
   <script src="main.bc.js"></script>
   <script>
     const input = document.getElementById('expr');
@@ -222,10 +300,58 @@
     const errorDiv = document.getElementById('error');
     const resultDiv = document.getElementById('result');
     const normDiv = document.getElementById('normalized-expr');
+    const graphDiv = document.getElementById('graph-container');
     const statesBody = document.querySelector('#states-table tbody');
     const transBody = document.querySelector('#trans-table tbody');
 
-    function run() {
+    const vizReady = Viz.instance();
+
+    function dotEscape(s) {
+      return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    function toDot(states, transitions) {
+      const lines = [
+        'digraph {',
+        '  rankdir=LR;',
+        '  bgcolor="transparent";',
+        '  node [shape=ellipse, fontname="monospace", fontsize=11, margin="0.15,0.07"];',
+        '  edge [fontname="monospace", fontsize=10];',
+        '  __start [shape=none, label="", width=0, height=0];',
+      ];
+
+      const acceptingIds = new Set();
+      const startId = states.length ? states[0].id : 0;
+
+      states.forEach(s => {
+        const acc = s.accepting.length > 0;
+        if (acc) acceptingIds.add(s.id);
+        const shape = acc ? 'doublecircle' : 'ellipse';
+        lines.push(`  ${s.id} [label="${dotEscape(s.label)}", shape=${shape}];`);
+      });
+
+      lines.push(`  __start -> ${startId};`);
+
+      // Merge parallel edges between the same pair of states
+      const edgeMap = new Map();
+      transitions.forEach(t => {
+        const key = `${t.from}->${t.to}`;
+        if (edgeMap.has(key)) edgeMap.get(key).push(t.label);
+        else edgeMap.set(key, [t.label]);
+      });
+      edgeMap.forEach((labels, key) => {
+        const [from, to] = key.split('->');
+        const label = labels.length <= 4
+          ? labels.join('\\n')
+          : labels.slice(0, 3).join('\\n') + `\\n(+${labels.length - 3} more)`;
+        lines.push(`  ${from} -> ${to} [label="${dotEscape(label)}"];`);
+      });
+
+      lines.push('}');
+      return lines.join('\n');
+    }
+
+    async function run() {
       const text = input.value.trim();
       errorDiv.textContent = '';
       resultDiv.style.display = 'none';
@@ -241,6 +367,27 @@
 
       const states = Array.from(r.states);
       const transitions = Array.from(r.transitions);
+      const acceptingIds = new Set(states.filter(s => s.accepting.length).map(s => s.id));
+      const startId = states.length ? states[0].id : -1;
+
+      // Render graph
+      const viz = await vizReady;
+      const dot = toDot(states, transitions);
+      graphDiv.innerHTML = '';
+      try {
+        const svg = viz.renderSVGElement(dot);
+        // Tag nodes for CSS styling
+        svg.querySelectorAll('.node').forEach(g => {
+          const title = g.querySelector('title');
+          if (!title) return;
+          const id = parseInt(title.textContent, 10);
+          if (acceptingIds.has(id)) g.classList.add('accepting');
+          if (id === startId) g.classList.add('start');
+        });
+        graphDiv.appendChild(svg);
+      } catch (e) {
+        graphDiv.textContent = 'Graph rendering failed';
+      }
 
       // Build state label map
       const labelOf = {};
