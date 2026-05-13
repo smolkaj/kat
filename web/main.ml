@@ -129,7 +129,7 @@ let parse (tokens : token list) : Exp.t =
   e
 
 
-let enumerate_atoms () : atom list =
+let all_atoms : atom list =
   let n = List.length all_of_test in
   List.init (1 lsl n) (fun i ->
     let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_of_test in
@@ -164,7 +164,7 @@ type dfa_transition = {
 
 let explore_dfa (e : Exp.t) =
   let dfa = ExpACI.brzozowski_dfa e in
-  let atoms = enumerate_atoms () in
+  let atoms = all_atoms in
   let queue = Queue.create () in
   let ids = ref StateMap.empty in
   let next_id = ref 0 in
