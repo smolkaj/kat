@@ -3,3 +3,7 @@
  (libraries kat js_of_ocaml)
  (preprocess (pps js_of_ocaml-ppx))
  (modes js))
+
+(alias
+ (name site)
+ (deps index.html main.bc.js))
