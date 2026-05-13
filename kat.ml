@@ -3,10 +3,10 @@
 (*===========================================================================*)
 
 (** Primitive tests. May want to functorize over this type. *)
-type test = T1 | T2 | T3 | T4 [@@deriving sexp]
+type test = T1 | T2 | T3 | T4 [@@deriving sexp, enumerate]
 
 (** Actions. The set of actions is often denoted by Σ. *)
-type action = A1 | A2 | A3 | A4 [@@deriving sexp]
+type action = A1 | A2 | A3 | A4 [@@deriving sexp, enumerate]
 
 (** Atoms are truth assignments, mapping tests to true/false. *)
 type atom = test -> bool

@@ -2,8 +2,8 @@ open Js_of_ocaml
 open Kat
 open Sexplib0.Sexp
 
-let all_tests = [T1; T2; T3; T4]
-let all_actions = [A1; A2; A3; A4]
+let all_tests = all_of_test
+let all_actions = all_of_action
 
 let test_of_string s =
   try Some (test_of_sexp (Atom s)) with _ -> None
