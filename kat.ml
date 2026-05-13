@@ -3,10 +3,10 @@
 (*===========================================================================*)
 
 (** Primitive tests. May want to functorize over this type. *)
-type test = T1 | T2 | T3 | T4 [@@deriving sexp]
+type test = T1 | T2 | T3 | T4 [@@deriving sexp, enumerate]
 
 (** Actions. The set of actions is often denoted by Σ. *)
-type action = A1 | A2 | A3 | A4 [@@deriving sexp]
+type action = A1 | A2 | A3 | A4 [@@deriving sexp, enumerate]
 
 (** Atoms are truth assignments, mapping tests to true/false. *)
 type atom = test -> bool
@@ -144,7 +144,7 @@ module ExpACI = struct
   let abort = hashcons (Union Hashcons.Hset.empty)
 
   let equal e f = (e.tag = f.tag)
-  let compare e f = Pervasives.compare e.tag f.tag
+  let compare e f = Int.compare e.tag f.tag
   let hash e = e.hkey
 
   let is_skip e = equal e skip
@@ -223,9 +223,7 @@ module ExpACI = struct
     | Seq es ->
       delta_seq es abort a p
     | Union es ->
-      Hashcons.Hset.elements es
-      |> List.map (fun e -> delta e a p)
-      |> List.fold_left mk_union abort
+      Hashcons.Hset.fold (fun e acc -> mk_union (delta e a p) acc) es abort
     | Star e0 ->
       mk_seq (delta e0 a p) e
   and delta_seq (es : t list) (acc : t) (a : atom) (p : action) : t =

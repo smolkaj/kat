@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KAT Explorer — Kleene Algebra with Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f1eb;
+    --paper-warm: #efe8df;
+    --ink: #2c2416;
+    --ink-light: #5c5245;
+    --ink-faint: #9e9486;
+    --ink-ghost: #c9c1b6;
+    --accent: #8b2e1c;
+    --accent-light: #b44a35;
+    --accept: #2e6b3a;
+    --accept-light: #4a9e5c;
+    --blue: #2a4a6b;
+    --blue-light: #3d6d9e;
+    --grid: rgba(44, 36, 22, 0.06);
+    --grid-accent: rgba(44, 36, 22, 0.12);
+    --shadow: rgba(44, 36, 22, 0.08);
+    --mono: 'IBM Plex Mono', 'Menlo', monospace;
+    --serif: 'Source Serif 4', 'Georgia', serif;
+    --display: 'Playfair Display', 'Georgia', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--serif);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem 2rem;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(139, 46, 28, 0.03) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(42, 74, 107, 0.03) 0%, transparent 60%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  h1 .ampersand {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--ink-light);
+    margin-top: 0.4rem;
+    font-weight: 300;
+  }
+
+  .rule {
+    width: 60px;
+    height: 1px;
+    background: var(--ink-ghost);
+    margin: 1.2rem auto 0;
+  }
+
+  .input-area {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+    animation: fadeIn 0.6s ease-out 0.1s both;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+    background: #fff;
+    border: 1.5px solid var(--ink-ghost);
+    border-radius: 4px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 46, 28, 0.08);
+  }
+
+  button {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.7rem 1.6rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  button:hover { background: var(--accent); }
+  button:active { transform: scale(0.97); }
+
+  .error {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+    max-width: 640px;
+    width: 100%;
+  }
+
+  .examples-bar {
+    width: 100%;
+    max-width: 640px;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-bottom: 2rem;
+    animation: fadeIn 0.6s ease-out 0.15s both;
+  }
+
+  .examples-bar span { margin-right: 0.3rem; }
+
+  .examples-bar a {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--blue);
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 3px;
+    margin-right: 0.4rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .examples-bar a:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .result {
+    width: 100%;
+    max-width: 780px;
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .normalized {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.5rem;
+    background: #fff;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+
+  .normalized .label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+  }
+
+  .normalized .expr {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    color: var(--ink);
+    word-break: break-all;
+  }
+
+  #graph-container {
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      linear-gradient(var(--grid-accent) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-accent) 1px, transparent 1px),
+      #fff;
+    background-size:
+      10px 10px,
+      10px 10px,
+      50px 50px,
+      50px 50px;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 1px 4px var(--shadow);
+    position: relative;
+  }
+
+  #graph-container::before {
+    content: 'AUTOMATON';
+    position: absolute;
+    top: 0.5rem;
+    left: 0.7rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--ink-ghost);
+    text-transform: uppercase;
+  }
+
+  #graph-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  #graph-container svg polygon[fill="white"],
+  #graph-container svg polygon[fill="#ffffff"] { fill: transparent !important; stroke: none !important; }
+
+  #graph-container svg .node polygon,
+  #graph-container svg .node ellipse {
+    fill: #fff !important;
+    stroke: var(--ink-light) !important;
+    stroke-width: 1.5 !important;
+  }
+
+  #graph-container svg .node.accepting ellipse {
+    stroke: var(--accept) !important;
+    stroke-width: 2 !important;
+  }
+
+  #graph-container svg .node.start ellipse {
+    stroke: var(--accent) !important;
+    stroke-width: 2.5 !important;
+  }
+
+  #graph-container svg .node text {
+    fill: var(--ink) !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 10px !important;
+  }
+
+  #graph-container svg .edge path {
+    stroke: var(--ink-faint) !important;
+    stroke-width: 1 !important;
+  }
+
+  #graph-container svg .edge polygon {
+    fill: var(--ink-faint) !important;
+    stroke: var(--ink-faint) !important;
+  }
+
+  #graph-container svg .edge text {
+    fill: var(--ink-light) !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 9px !important;
+  }
+
+  .tables-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 640px) {
+    .tables-section { grid-template-columns: 1fr; }
+  }
+
+  .table-card {
+    background: #fff;
+    border: 1px solid var(--ink-ghost);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+
+  .table-card h3 {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--ink-ghost);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    color: var(--ink-faint);
+    font-weight: 500;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1.5px solid var(--ink-ghost);
+  }
+
+  td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    vertical-align: top;
+    line-height: 1.4;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .state-label { color: var(--accent); }
+  .start-marker { color: var(--accent-light); font-weight: 600; }
+  .accepting { color: var(--accept); font-size: 0.72rem; }
+  .edge-label { color: var(--ink-faint); }
+
+  .help {
+    max-width: 640px;
+    width: 100%;
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    line-height: 1.8;
+    animation: fadeIn 0.6s ease-out 0.2s both;
+  }
+
+  .help code {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: rgba(0,0,0,0.04);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    color: var(--ink-light);
+  }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ink-ghost);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    text-align: center;
+    width: 100%;
+    max-width: 640px;
+    animation: fadeIn 0.6s ease-out 0.3s both;
+  }
+
+  .footer a {
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .footer a:hover { text-decoration: underline; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>Kleene Algebra<br>with Tests</h1>
+    <p class="subtitle">Brzozowski derivatives &amp; DFA construction</p>
+    <div class="rule"></div>
+  </header>
+
+  <div class="input-area">
+    <input type="text" id="expr" placeholder="enter a KAT expression ..." autofocus>
+    <button id="go">Explore</button>
+  </div>
+  <div class="error" id="error"></div>
+
+  <div class="examples-bar">
+    <span>Try:</span>
+    <a data-expr="(T1;(A1+A2);A3 + !T2;A2)*">while loop</a>
+    <a data-expr="T1;A1;A2 + !T1;A2">if-then-else</a>
+    <a data-expr="A1;A2*;A3">sequence</a>
+    <a data-expr="(!T1;A1)*;T1">repeat until</a>
+  </div>
+
+  <div class="result" id="result" style="display:none">
+    <div class="normalized">
+      <div class="label">Normalized mod ACI</div>
+      <div class="expr" id="normalized-expr"></div>
+    </div>
+
+    <div id="graph-container"></div>
+
+    <div class="tables-section">
+      <div class="table-card">
+        <h3>States</h3>
+        <table id="states-table">
+          <thead><tr><th>#</th><th>Expression</th><th>Accepting</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <h3>Transitions</h3>
+        <table id="trans-table">
+          <thead><tr><th>From</th><th>Label</th><th>To</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="help">
+    Tests: <code>T1</code> <code>T2</code> <code>T3</code> <code>T4</code> &nbsp;&middot;&nbsp;
+    Actions: <code>A1</code> <code>A2</code> <code>A3</code> <code>A4</code><br>
+    <code>+</code> union &nbsp;&middot;&nbsp;
+    <code>;</code> seq &nbsp;&middot;&nbsp;
+    <code>*</code> star &nbsp;&middot;&nbsp;
+    <code>!</code> negation &nbsp;&middot;&nbsp;
+    <code>0</code> abort &nbsp;&middot;&nbsp;
+    <code>1</code> skip
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/smolkaj/kat">Source</a> &middot;
+    Based on Brzozowski derivatives for KAT
+    (<a href="http://www.cs.cornell.edu/~kozen/Papers/ChenPucella.pdf">Chen &amp; Pucella</a>)
+  </div>
+
+  <script src="https://unpkg.com/@viz-js/viz@3.11.0/lib/viz-standalone.js"></script>
+  <script src="main.bc.js"></script>
+  <script>
+    const input = document.getElementById('expr');
+    const goBtn = document.getElementById('go');
+    const errorDiv = document.getElementById('error');
+    const resultDiv = document.getElementById('result');
+    const normDiv = document.getElementById('normalized-expr');
+    const graphDiv = document.getElementById('graph-container');
+    const statesBody = document.querySelector('#states-table tbody');
+    const transBody = document.querySelector('#trans-table tbody');
+
+    const vizReady = Viz.instance();
+
+    function dotEscape(s) {
+      return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    function toDot(states, transitions) {
+      const lines = [
+        'digraph {',
+        '  rankdir=LR;',
+        '  bgcolor="transparent";',
+        '  node [shape=ellipse, fontname="IBM Plex Mono", fontsize=10, style=filled, fillcolor="#ffffff", color="#5c5245", margin="0.12,0.06"];',
+        '  edge [fontname="IBM Plex Mono", fontsize=9, color="#9e9486", fontcolor="#5c5245"];',
+        '  __start [shape=none, label="", width=0, height=0];',
+      ];
+
+      const startId = states.length ? states[0].id : 0;
+
+      function htmlEscape(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      states.forEach(s => {
+        const acc = s.accepting.length > 0;
+        const shape = acc ? 'doublecircle' : 'ellipse';
+        const color = s.start ? '#8b2e1c' : acc ? '#2e6b3a' : '#5c5245';
+        const penwidth = s.start ? '2.5' : acc ? '2' : '1.5';
+        let label;
+        if (acc) {
+          const atoms = s.accepting.map(htmlEscape).join(', ');
+          label = `<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD>${htmlEscape(s.label)}</TD></TR><TR><TD><FONT POINT-SIZE="8" COLOR="#2e6b3a">${atoms}</FONT></TD></TR></TABLE>>`;
+        } else {
+          label = `"${dotEscape(s.label)}"`;
+        }
+        lines.push(`  ${s.id} [label=${label}, shape=${shape}, color="${color}", penwidth=${penwidth}];`);
+      });
+
+      lines.push(`  __start -> ${startId} [color="#8b2e1c", penwidth=1.5];`);
+
+      const edgeMap = new Map();
+      transitions.forEach(t => {
+        const key = `${t.from}->${t.to}`;
+        if (edgeMap.has(key)) edgeMap.get(key).push(t.label);
+        else edgeMap.set(key, [t.label]);
+      });
+      edgeMap.forEach((labels, key) => {
+        const [from, to] = key.split('->');
+        const escaped = labels.map(dotEscape);
+        const label = escaped.length <= 4
+          ? escaped.join('\\n')
+          : escaped.slice(0, 3).join('\\n') + `\\n(+${escaped.length - 3} more)`;
+        lines.push(`  ${from} -> ${to} [label="${label}"];`);
+      });
+
+      lines.push('}');
+      return lines.join('\n');
+    }
+
+    async function run() {
+      const text = input.value.trim();
+      errorDiv.textContent = '';
+      resultDiv.style.display = 'none';
+      if (!text) return;
+
+      const r = KAT.process(text);
+      if (!r.ok) {
+        errorDiv.textContent = r.error;
+        return;
+      }
+
+      normDiv.textContent = r.expression;
+
+      const states = Array.from(r.states);
+      const transitions = Array.from(r.transitions);
+      const acceptingIds = new Set(states.filter(s => s.accepting.length).map(s => s.id));
+      const startId = states.length ? states[0].id : -1;
+
+      const viz = await vizReady;
+      const dot = toDot(states, transitions);
+      graphDiv.innerHTML = '';
+      try {
+        const svg = viz.renderSVGElement(dot);
+        svg.querySelectorAll('.node').forEach(g => {
+          const title = g.querySelector('title');
+          if (!title) return;
+          const id = parseInt(title.textContent, 10);
+          if (acceptingIds.has(id)) g.classList.add('accepting');
+          if (id === startId) g.classList.add('start');
+        });
+        graphDiv.appendChild(svg);
+      } catch (e) {
+        graphDiv.textContent = 'Graph rendering failed';
+      }
+
+      const labelOf = {};
+      states.forEach(s => { labelOf[s.id] = s.label; });
+
+      statesBody.innerHTML = '';
+      states.forEach(s => {
+        const tr = document.createElement('tr');
+        const marker = s.start ? '→ ' : '';
+        tr.innerHTML =
+          `<td><span class="start-marker">${marker}</span>${s.id}</td>` +
+          `<td class="state-label">${esc(s.label)}</td>` +
+          `<td class="accepting">${s.accepting.length ? s.accepting.map(esc).join(', ') : '—'}</td>`;
+        statesBody.appendChild(tr);
+      });
+
+      transBody.innerHTML = '';
+      transitions.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          `<td>${t.from}</td>` +
+          `<td class="edge-label">${esc(t.label)}</td>` +
+          `<td>${t.to}</td>`;
+        transBody.appendChild(tr);
+      });
+
+      resultDiv.style.display = 'block';
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    goBtn.addEventListener('click', run);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+    document.querySelectorAll('[data-expr]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        input.value = a.dataset.expr;
+        run();
+      });
+    });
+  </script>
+</body>
+</html>
