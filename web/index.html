@@ -293,7 +293,12 @@
   </div>
 
   <script src="https://unpkg.com/@viz-js/viz@3.11.0/lib/viz-standalone.js"></script>
-  <script src="main.bc.js"></script>
+  <script src="main.bc.js" onerror="
+    // When served from the source tree, the JS bundle is in _build/
+    const s = document.createElement('script');
+    s.src = '../_build/default/web/main.bc.js';
+    document.head.appendChild(s);
+  "></script>
   <script>
     const input = document.getElementById('expr');
     const goBtn = document.getElementById('go');
