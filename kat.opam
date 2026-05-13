@@ -1,0 +1,12 @@
+opam-version: "2.0"
+name: "kat"
+version: "0.1.0"
+synopsis: "Kleene Algebra with Tests — Brzozowski derivatives & DFA construction"
+depends: [
+  "ocaml" {>= "5.0"}
+  "dune" {>= "3.0"}
+  "hashcons"
+  "js_of_ocaml" {>= "5.0"}
+  "js_of_ocaml-ppx" {>= "5.0"}
+]
+build: ["dune" "build" "-p" name "-j" jobs]

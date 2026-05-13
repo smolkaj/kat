@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KAT Explorer — Kleene Algebra with Tests</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --border: #0f3460;
+    --accent: #e94560;
+    --text: #eee;
+    --dim: #888;
+    --ok: #53d769;
+    --code-bg: #0d1b2a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Berkeley Mono', 'JetBrains Mono', 'Fira Code', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .subtitle {
+    font-size: 0.85rem;
+    color: var(--dim);
+    margin-bottom: 1.5rem;
+  }
+  .input-area {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  input[type="text"] {
+    flex: 1;
+    font-family: inherit;
+    font-size: 1.1rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  .error {
+    color: var(--accent);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    max-width: 720px;
+    width: 100%;
+  }
+  .result {
+    width: 100%;
+    max-width: 720px;
+  }
+  .normalized {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    overflow-x: auto;
+  }
+  .normalized .label {
+    font-size: 0.75rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+  }
+  .section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 2px solid var(--border);
+    color: var(--dim);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  td {
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .state-label { color: var(--accent); }
+  .start-marker { color: var(--ok); font-weight: bold; }
+  .accepting { color: var(--ok); font-size: 0.8rem; }
+  .edge-label { color: var(--dim); }
+  .help {
+    max-width: 720px;
+    width: 100%;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+  .help code {
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    color: var(--text);
+  }
+  .examples { margin-top: 0.5rem; }
+  .examples a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+    margin-right: 1rem;
+    white-space: nowrap;
+  }
+  .examples a:hover { text-decoration: underline; }
+  .footer {
+    margin-top: 2rem;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <h1>KAT Explorer</h1>
+  <p class="subtitle">Kleene Algebra with Tests &mdash; Brzozowski derivatives &amp; DFA construction</p>
+
+  <div class="input-area">
+    <input type="text" id="expr" placeholder="e.g. (T1;(A1+A2);A3 + !T2;A2)*" autofocus>
+    <button id="go">Explore</button>
+  </div>
+  <div class="error" id="error"></div>
+
+  <div class="result" id="result" style="display:none">
+    <div class="normalized">
+      <div class="label">Normalized (mod ACI)</div>
+      <div id="normalized-expr"></div>
+    </div>
+
+    <div class="section-title">States</div>
+    <table id="states-table">
+      <thead><tr><th>#</th><th>Expression</th><th>Accepting when</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="section-title">Transitions</div>
+    <table id="trans-table">
+      <thead><tr><th>From</th><th>Atom, Action</th><th>To</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="help">
+    <strong>Syntax</strong><br>
+    Tests: <code>T1</code> <code>T2</code> <code>T3</code> <code>T4</code> &nbsp;
+    Actions: <code>A1</code> <code>A2</code> <code>A3</code> <code>A4</code><br>
+    Operators: <code>+</code> union, <code>;</code> or juxtaposition for seq,
+    <code>*</code> Kleene star, <code>!</code> negation (booleans only),
+    <code>0</code> abort, <code>1</code> skip<br>
+    <div class="examples">
+      <strong>Try:</strong>
+      <a data-expr="(T1;(A1+A2);A3 + !T2;A2)*">while loop</a>
+      <a data-expr="T1;A1;A2 + !T1;A2">if-then-else</a>
+      <a data-expr="A1;A2*;A3">sequence</a>
+      <a data-expr="(!T1;A1)*;T1">repeat until</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://github.com/smolkaj/kat">Source on GitHub</a>
+    &mdash; based on Brzozowski derivatives for KAT
+    (<a href="http://www.cs.cornell.edu/~kozen/Papers/ChenPucella.pdf">Chen &amp; Pucella</a>)
+  </div>
+
+  <script src="main.bc.js"></script>
+  <script>
+    const input = document.getElementById('expr');
+    const goBtn = document.getElementById('go');
+    const errorDiv = document.getElementById('error');
+    const resultDiv = document.getElementById('result');
+    const normDiv = document.getElementById('normalized-expr');
+    const statesBody = document.querySelector('#states-table tbody');
+    const transBody = document.querySelector('#trans-table tbody');
+
+    function run() {
+      const text = input.value.trim();
+      errorDiv.textContent = '';
+      resultDiv.style.display = 'none';
+      if (!text) return;
+
+      const r = KAT.process(text);
+      if (!r.ok) {
+        errorDiv.textContent = r.error;
+        return;
+      }
+
+      normDiv.textContent = r.expression;
+
+      // Parse newline-delimited JSON
+      const states = r.states.trim().split('\n').filter(Boolean).map(JSON.parse);
+      const transitions = r.transitions.trim().split('\n').filter(Boolean).map(JSON.parse);
+
+      // Build state label map
+      const labelOf = {};
+      states.forEach(s => { labelOf[s.id] = s.label; });
+
+      // States table
+      statesBody.innerHTML = '';
+      states.forEach(s => {
+        const tr = document.createElement('tr');
+        const marker = s.start ? ' →' : '';
+        tr.innerHTML =
+          `<td><span class="start-marker">${marker}</span> ${s.id}</td>` +
+          `<td class="state-label">${esc(s.label)}</td>` +
+          `<td class="accepting">${s.accepting.length ? s.accepting.map(esc).join(', ') : '—'}</td>`;
+        statesBody.appendChild(tr);
+      });
+
+      // Transitions table
+      transBody.innerHTML = '';
+      transitions.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          `<td>${t.from} <span class="edge-label">${esc(labelOf[t.from] || '?')}</span></td>` +
+          `<td class="edge-label">${esc(t.label)}</td>` +
+          `<td>${t.to} <span class="edge-label">${esc(labelOf[t.to] || '?')}</span></td>`;
+        transBody.appendChild(tr);
+      });
+
+      resultDiv.style.display = 'block';
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    goBtn.addEventListener('click', run);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+    document.querySelectorAll('[data-expr]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        input.value = a.dataset.expr;
+        run();
+      });
+    });
+  </script>
+</body>
+</html>

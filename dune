@@ -1,6 +1,4 @@
 (library
  (name kat)
  (wrapped false)
- (libraries hashcons fmt)
- (preprocess (pps ppx_jane))
-)
+ (libraries hashcons))

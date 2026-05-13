@@ -3,10 +3,23 @@
 (*===========================================================================*)
 
 (** Primitive tests. May want to functorize over this type. *)
-type test = T1 | T2 | T3 | T4 [@@deriving sexp]
+type test = T1 | T2 | T3 | T4
 
 (** Actions. The set of actions is often denoted by Σ. *)
-type action = A1 | A2 | A3 | A4 [@@deriving sexp]
+type action = A1 | A2 | A3 | A4
+
+let all_tests = [T1; T2; T3; T4]
+let all_actions = [A1; A2; A3; A4]
+
+let string_of_test = function T1 -> "T1" | T2 -> "T2" | T3 -> "T3" | T4 -> "T4"
+let string_of_action = function A1 -> "A1" | A2 -> "A2" | A3 -> "A3" | A4 -> "A4"
+
+let test_of_string = function
+  | "T1" -> Some T1 | "T2" -> Some T2 | "T3" -> Some T3 | "T4" -> Some T4
+  | _ -> None
+let action_of_string = function
+  | "A1" -> Some A1 | "A2" -> Some A2 | "A3" -> Some A3 | "A4" -> Some A4
+  | _ -> None
 
 (** Atoms are truth assignments, mapping tests to true/false. *)
 type atom = test -> bool
@@ -144,7 +157,7 @@ module ExpACI = struct
   let abort = hashcons (Union Hashcons.Hset.empty)
 
   let equal e f = (e.tag = f.tag)
-  let compare e f = Pervasives.compare e.tag f.tag
+  let compare e f = Int.compare e.tag f.tag
   let hash e = e.hkey
 
   let is_skip e = equal e skip
@@ -259,11 +272,11 @@ module ExpACI = struct
     let rec pp_star fmt t =
       match t.node with
       | Test (t, positive) ->
-        Format.fprintf fmt !"@[<h>%s%{sexp:test}@]"
+        Format.fprintf fmt "@[<h>%s%s@]"
           (if positive then "" else "¬")
-          t
+          (string_of_test t)
       | Action a ->
-        Format.fprintf fmt !"@[<h>%{sexp:action}@]" a
+        Format.fprintf fmt "@[<h>%s@]" (string_of_action a)
       | Seq [] ->
         Format.fprintf fmt "1"
       | Seq _ ->
