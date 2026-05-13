@@ -2,7 +2,7 @@
 (generate_opam_files true)
 
 (name kat)
-(version 0.1.0)
+(version 1.0.0)
 
 (package
  (name kat)
