@@ -2,23 +2,20 @@ open Js_of_ocaml
 open Kat
 open Sexplib0.Sexp
 
-let all_tests = all_of_test
-let all_actions = all_of_action
-
 let test_of_string s =
   try Some (test_of_sexp (Atom s)) with _ -> None
 let action_of_string s =
   try Some (action_of_sexp (Atom s)) with _ -> None
 
 let enumerate_atoms () : atom list =
-  let n = List.length all_tests in
+  let n = List.length all_of_test in
   let count = 1 lsl n in
   List.init count (fun i ->
-    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_tests in
+    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_of_test in
     fun t -> List.assoc t assignment)
 
 let pp_atom (a : atom) : string =
-  all_tests
+  all_of_test
   |> List.filter_map (fun t ->
     if a t then Some (to_string (sexp_of_test t))
     else None)
@@ -216,7 +213,7 @@ let explore_dfa (e : Exp.t) =
               ("label", js_string edge_label);
             |] :: !transitions;
             if is_new' then Queue.push s' queue
-          end) all_actions) atoms
+          end) all_of_action) atoms
     end
   done;
   (dfa.start, js_array_of_list (List.rev !states), js_array_of_list (List.rev !transitions))
