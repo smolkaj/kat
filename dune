@@ -1,4 +1,5 @@
 (library
  (name kat)
  (wrapped false)
- (libraries hashcons))
+ (libraries hashcons)
+ (preprocess (pps ppx_sexp_conv)))

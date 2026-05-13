@@ -3,10 +3,10 @@
 (*===========================================================================*)
 
 (** Primitive tests. May want to functorize over this type. *)
-type test = T1 | T2 | T3 | T4
+type test = T1 | T2 | T3 | T4 [@@deriving sexp]
 
 (** Actions. The set of actions is often denoted by Σ. *)
-type action = A1 | A2 | A3 | A4
+type action = A1 | A2 | A3 | A4 [@@deriving sexp]
 
 let all_tests = [T1; T2; T3; T4]
 let all_actions = [A1; A2; A3; A4]
