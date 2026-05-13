@@ -239,9 +239,8 @@
 
       normDiv.textContent = r.expression;
 
-      // Parse newline-delimited JSON
-      const states = r.states.trim().split('\n').filter(Boolean).map(JSON.parse);
-      const transitions = r.transitions.trim().split('\n').filter(Boolean).map(JSON.parse);
+      const states = Array.from(r.states);
+      const transitions = Array.from(r.transitions);
 
       // Build state label map
       const labelOf = {};

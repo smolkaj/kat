@@ -132,108 +132,81 @@ let parse_string (s : string) : Exp.t =
   parse (tokenize s)
 
 
-(* ========================================================================= *)
-(* DFA EXPLORATION                                                           *)
-(* ========================================================================= *)
-
-module StateSet = Set.Make(struct
-  type t = ExpACI.t
-  let compare = ExpACI.compare
-end)
-
 module StateMap = Map.Make(struct
   type t = ExpACI.t
   let compare = ExpACI.compare
 end)
 
-let enumerate_atoms () : atom list =
-  let n = List.length all_tests in
-  let count = 1 lsl n in
-  List.init count (fun i ->
-    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_tests in
-    fun t -> List.assoc t assignment)
+let js_string s = Js.Unsafe.inject (Js.string s)
+let js_int n = Js.Unsafe.inject n
+let js_bool b = Js.Unsafe.inject (Js.bool b)
 
-let pp_atom (a : atom) : string =
-  all_tests
-  |> List.filter_map (fun t ->
-    if a t then Some (string_of_test t)
-    else None)
-  |> function
-    | [] -> "∅"
-    | ts -> String.concat "" ts
+let js_array_of_list xs =
+  Js.Unsafe.inject (Js.array (Array.of_list xs))
 
 let explore_dfa (e : Exp.t) =
   let dfa = ExpACI.brzozowski_dfa e in
   let atoms = enumerate_atoms () in
-  let visited = ref StateSet.empty in
   let queue = Queue.create () in
   let state_id = ref StateMap.empty in
   let next_id = ref 0 in
   let get_id s =
     match StateMap.find_opt s !state_id with
-    | Some id -> id
+    | Some id -> (id, false)
     | None ->
       let id = !next_id in
       incr next_id;
       state_id := StateMap.add s id !state_id;
-      id
+      (id, true)
   in
-  let states = Buffer.create 256 in
-  let transitions = Buffer.create 512 in
+  let states = ref [] in
+  let transitions = ref [] in
   Queue.push dfa.start queue;
   ignore (get_id dfa.start);
   while not (Queue.is_empty queue) do
     let s = Queue.pop queue in
-    if not (StateSet.mem s !visited) then begin
-      visited := StateSet.add s !visited;
-      let id = get_id s in
+    let (id, is_new) = get_id s in
+    if is_new || id = 0 && List.length !states = 0 then begin
       let label = Format.asprintf "%a" ExpACI.pp s in
       let accepting =
         atoms
         |> List.filter (fun a -> dfa.obs s a)
-        |> List.map pp_atom
+        |> List.map (fun a -> js_string (pp_atom a))
       in
-      Buffer.add_string states
-        (Printf.sprintf "{\"id\":%d,\"label\":%s,\"start\":%b,\"accepting\":%s}\n"
-           id (Js._JSON##stringify (Js.string label) |> Js.to_string)
-           (id = 0)
-           (Printf.sprintf "[%s]"
-              (String.concat ","
-                 (List.map (fun s ->
-                    Js._JSON##stringify (Js.string s) |> Js.to_string) accepting))));
+      states := Js.Unsafe.obj [|
+        ("id", js_int id);
+        ("label", js_string label);
+        ("start", js_bool (id = 0));
+        ("accepting", js_array_of_list accepting);
+      |] :: !states;
       List.iter (fun a ->
         List.iter (fun p ->
           let s' = dfa.trans s a p in
           if not (ExpACI.is_abort s') then begin
-            let id' = get_id s' in
+            let (id', is_new') = get_id s' in
             let edge_label = Printf.sprintf "%s,%s" (pp_atom a) (string_of_action p) in
-            Buffer.add_string transitions
-              (Printf.sprintf "{\"from\":%d,\"to\":%d,\"label\":%s}\n"
-                 id id'
-                 (Js._JSON##stringify (Js.string edge_label) |> Js.to_string));
-            if not (StateSet.mem s' !visited) then
-              Queue.push s' queue
+            transitions := Js.Unsafe.obj [|
+              ("from", js_int id);
+              ("to", js_int id');
+              ("label", js_string edge_label);
+            |] :: !transitions;
+            if is_new' then Queue.push s' queue
           end) all_actions) atoms
     end
   done;
-  (Buffer.contents states, Buffer.contents transitions)
-
-
-(* ========================================================================= *)
-(* JS INTERFACE                                                              *)
-(* ========================================================================= *)
+  (dfa.start, js_array_of_list (List.rev !states), js_array_of_list (List.rev !transitions))
 
 let () =
   let process input_str =
     try
       let e = parse_string input_str in
-      let (states, transitions) = explore_dfa e in
-      let pretty = Format.asprintf "%a" ExpACI.pp (ExpACI.of_exp e) in
+      let (start, states, transitions) = explore_dfa e in
+      let pretty = Format.asprintf "%a" ExpACI.pp start in
       Js.Unsafe.obj [|
         ("ok", Js.Unsafe.inject Js._true);
         ("expression", Js.Unsafe.inject (Js.string pretty));
-        ("states", Js.Unsafe.inject (Js.string states));
-        ("transitions", Js.Unsafe.inject (Js.string transitions));
+        ("states", states);
+        ("transitions", transitions);
       |]
     with Failure msg ->
       Js.Unsafe.obj [|

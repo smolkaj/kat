@@ -24,6 +24,22 @@ let action_of_string = function
 (** Atoms are truth assignments, mapping tests to true/false. *)
 type atom = test -> bool
 
+let enumerate_atoms () : atom list =
+  let n = List.length all_tests in
+  let count = 1 lsl n in
+  List.init count (fun i ->
+    let assignment = List.mapi (fun j t -> (t, i land (1 lsl j) <> 0)) all_tests in
+    fun t -> List.assoc t assignment)
+
+let pp_atom (a : atom) : string =
+  all_tests
+  |> List.filter_map (fun t ->
+    if a t then Some (string_of_test t)
+    else None)
+  |> function
+    | [] -> "∅"
+    | ts -> String.concat "" ts
+
 
 (*===========================================================================*)
 (* AUTOMATA                                                                  *)
@@ -236,9 +252,7 @@ module ExpACI = struct
     | Seq es ->
       delta_seq es abort a p
     | Union es ->
-      Hashcons.Hset.elements es
-      |> List.map (fun e -> delta e a p)
-      |> List.fold_left mk_union abort
+      Hashcons.Hset.fold (fun e acc -> mk_union (delta e a p) acc) es abort
     | Star e0 ->
       mk_seq (delta e0 a p) e
   and delta_seq (es : t list) (acc : t) (a : atom) (p : action) : t =
