@@ -1,18 +1,14 @@
 open Js_of_ocaml
 open Kat
+open Sexplib0.Sexp
 
 let all_tests = [T1; T2; T3; T4]
 let all_actions = [A1; A2; A3; A4]
 
-let string_of_test = function T1 -> "T1" | T2 -> "T2" | T3 -> "T3" | T4 -> "T4"
-let string_of_action = function A1 -> "A1" | A2 -> "A2" | A3 -> "A3" | A4 -> "A4"
-
-let test_of_string = function
-  | "T1" -> Some T1 | "T2" -> Some T2 | "T3" -> Some T3 | "T4" -> Some T4
-  | _ -> None
-let action_of_string = function
-  | "A1" -> Some A1 | "A2" -> Some A2 | "A3" -> Some A3 | "A4" -> Some A4
-  | _ -> None
+let test_of_string s =
+  try Some (test_of_sexp (Atom s)) with _ -> None
+let action_of_string s =
+  try Some (action_of_sexp (Atom s)) with _ -> None
 
 let enumerate_atoms () : atom list =
   let n = List.length all_tests in
@@ -24,7 +20,7 @@ let enumerate_atoms () : atom list =
 let pp_atom (a : atom) : string =
   all_tests
   |> List.filter_map (fun t ->
-    if a t then Some (string_of_test t)
+    if a t then Some (to_string (sexp_of_test t))
     else None)
   |> function
     | [] -> "∅"
@@ -213,7 +209,7 @@ let explore_dfa (e : Exp.t) =
           let s' = dfa.trans s a p in
           if not (ExpACI.is_abort s') then begin
             let (id', is_new') = get_id s' in
-            let edge_label = Printf.sprintf "%s,%s" (pp_atom a) (string_of_action p) in
+            let edge_label = Printf.sprintf "%s,%s" (pp_atom a) (to_string (sexp_of_action p)) in
             transitions := Js.Unsafe.obj [|
               ("from", js_int id);
               ("to", js_int id');
