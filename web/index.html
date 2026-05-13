@@ -495,12 +495,23 @@
 
       const startId = states.length ? states[0].id : 0;
 
+      function htmlEscape(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
       states.forEach(s => {
         const acc = s.accepting.length > 0;
         const shape = acc ? 'doublecircle' : 'ellipse';
         const color = s.start ? '#8b2e1c' : acc ? '#2e6b3a' : '#5c5245';
         const penwidth = s.start ? '2.5' : acc ? '2' : '1.5';
-        lines.push(`  ${s.id} [label="${dotEscape(s.label)}", shape=${shape}, color="${color}", penwidth=${penwidth}];`);
+        let label;
+        if (acc) {
+          const atoms = s.accepting.map(htmlEscape).join(', ');
+          label = `<<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD>${htmlEscape(s.label)}</TD></TR><TR><TD><FONT POINT-SIZE="8" COLOR="#2e6b3a">${atoms}</FONT></TD></TR></TABLE>>`;
+        } else {
+          label = `"${dotEscape(s.label)}"`;
+        }
+        lines.push(`  ${s.id} [label=${label}, shape=${shape}, color="${color}", penwidth=${penwidth}];`);
       });
 
       lines.push(`  __start -> ${startId} [color="#8b2e1c", penwidth=1.5];`);
